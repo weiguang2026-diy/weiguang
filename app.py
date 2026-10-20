@@ -183,7 +183,6 @@ with tab1:
                     
                     script = response.choices[0].message.content
                     
-                    # 成功特效：气球 + 雪花
                     st.balloons()
                     st.snow()
                     
@@ -193,17 +192,14 @@ with tab1:
                     st.markdown("---")
                     st.subheader("🎬 分镜画面生成")
                     
-                    # 究极暴力提取法
                     image_prompts = []
-                    for line in script.split('\n'):
-                        if '画面描述' in line:
-                            raw_text = line.split('】')[-1]
-                            clean_prompt = "".join(c for c in raw_text if (c.isascii() and (c.isalnum() or c in ' ,.')))
-                            clean_prompt = clean_prompt.strip()
-                            
-                            if len(clean_prompt) > 5:
-                                safe_prompt = clean_prompt + ", realistic, modern Chinese university campus, humble setting, casual everyday life, no luxury"
-                                image_prompts.append(safe_prompt)
+                    matches = re.findall(r"画面描述[】\]：:\s]*([a-zA-Z0-9\s,\.'\-]+)", script)
+                    
+                    for match in matches:
+                        clean_prompt = match.strip()
+                        if len(clean_prompt) > 5:
+                            safe_prompt = clean_prompt + ", realistic, modern Chinese university campus, humble setting, casual everyday life, no luxury"
+                            image_prompts.append(safe_prompt)
                     
                     if image_prompts:
                         for i, img_prompt in enumerate(image_prompts[:3]): 
