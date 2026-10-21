@@ -4,277 +4,250 @@ import time
 import re
 import random
 
-st.set_page_config(page_title="微光：意义建构与情绪疗愈", page_icon="✨", layout="centered")
+# ==========================================
+# 1. 页面基础配置与终极视觉 CSS
+# ==========================================
+st.set_page_config(page_title="微光 · 人生放映厅", page_icon="✨", layout="centered")
 
-# ==========================================
-# 🪄 特效注入区：CSS 动画（精灵蹦跳与闪烁）
-# ==========================================
 st.markdown("""
 <style>
-/* 精灵蹦跳动画 */
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-.bouncing-elf {
-    display: inline-block;
-    animation: bounce 1.5s infinite;
-}
+    /* 红棕星空背景 */
+    .stApp {
+        background-color: #1A0F0E !important;
+        background-image: 
+            radial-gradient(1.5px 1.5px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 40px 70px, #FFD700, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 90px 40px, #FFD700, rgba(0,0,0,0)),
+            linear-gradient(135deg, #2D1B18 0%, #4A2C2A 40%, #1A0F0E 100%) !important;
+        background-repeat: repeat;
+        background-size: 200px 200px, 200px 200px, 200px 200px, 200px 200px, 100% 100% !important;
+    }
 
-/* 呼吸闪烁光效 */
-@keyframes glow {
-    0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffcc00; }
-    50% { text-shadow: 0 0 10px #fff, 0 0 20px #ffcc00, 0 0 30px #ffcc00; }
-    100% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffcc00; }
-}
-.glow-text {
-    animation: glow 2s infinite;
-    color: #ff9900;
-    font-weight: bold;
-}
+    /* 全局文字与隐藏默认 UI */
+    * {
+        color: #F5E6D3 !important;
+        font-family: 'Noto Serif SC', 'STSong', serif !important;
+    }
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* 按钮 */
+    .stButton>button {
+        background-color: rgba(26, 15, 14, 0.6) !important;
+        color: #FFD700 !important;
+        border: 1px solid #FFD700 !important;
+        border-radius: 20px !important;
+        transition: all 0.3s ease !important;
+    }
+    .stButton>button:hover {
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
+        color: #fff !important;
+    }
+    
+    /* 输入框与聊天气泡 */
+    div[data-testid="stTextArea"] div[data-baseweb="textarea"],
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        background-color: transparent !important;
+        border: 1px solid rgba(255, 215, 0, 0.4) !important;
+        border-radius: 12px !important;
+    }
+    div[data-testid="stChatMessage"] {
+        background-color: rgba(26, 15, 14, 0.6) !important;
+        border-radius: 15px !important;
+        border: 1px solid rgba(255, 215, 0, 0.15) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# 将标题改为带动画效果的 HTML
-st.markdown('<h1 style="text-align: center;">✨ 微光 AIGC 叙事与自我认同平台 <span class="bouncing-elf">🧚‍♀️</span></h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: gray;">把真实的经历，重构为一部赋予生命意义的微电影</p>', unsafe_allow_html=True)
-
-tab1, tab2 = st.tabs(["🎬 创作微光 (叙事重构)", "🌟 拾取微光 (认知探索)"])
+st.markdown("<h1 style='text-align: center;'>✨ 微光 · 人生放映厅 🧚‍♀️</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A88B7D;'>“一切经历，无论好坏，都塑造了我。”</p>", unsafe_allow_html=True)
 
 # ==========================================
-# 底层核心资产：认知与情绪干预大字典
+# 2. 核心资产与初始化
 # ==========================================
-COGNITION_RULES = {
-    "😰 焦虑": {
-        "strategy": "允许暂停与聚焦当下",
-        "action": "闭上眼睛深呼吸，用手抚摸胸口安抚自己，关掉电脑去洗把脸",
-        "corpus": [
-            "大脑在报警，是因为你想一口气做完。允许自己休息五分钟，天塌不下来。",
-            "别盯着屏幕了，去洗把脸，回来先做第一件小事。",
-            "闭上眼睛，轻声告诉自己：我一定可以复习完的，我一定能轻松抓住考试要点。"
-        ]
-    },
-    "😭 悲伤/孤独": {
-        "strategy": "情绪接纳与独立人格建构",
-        "action": "给父母打视频通话，喝了药安静睡下，打开手机接受朋友的邀约，把烦心事写下来",
-        "corpus": [
-            "想哭就哭吧，眼泪不是软弱的证明，而是情绪的自然流动。就像天空下雨是为了洗净尘埃。",
-            "大学里的孤独，往往是因为你开始独立思考。试着把‘孤独’重新定义为‘独处’。",
-            "你不需要成为别人眼中的完美主角，只需要做自己故事里最真实的主人公。",
-            "再黑的黑夜也会迎来黎明，再长的坎坷也会出现平路。耐心点，给好运一点时间。"
-        ]
-    },
-    "😤 愤怒": {
-        "strategy": "建立边界感与自我正当性",
-        "action": "拉开床帘委婉说明需求，带上耳机隔离噪音，拍下插队证据去举报，去走廊吹风",
-        "corpus": [
-            "不用假装快乐和温柔，生气和愤怒也是被允许的。",
-            "撕碎一张纸，去允许自己发泄愤怒；去做你认为正确的事，不要因为别人的错误惩罚自己。",
-            "厌恶也是一种清晰的边界。现在的烦躁像暴雨，可是，雨总会停。"
-        ]
-    },
-    "😳 羞愧": {
-        "strategy": "自我宽恕与去中心化",
-        "action": "接受自己犯错的事实，告诉自己每个人一天经历很多事，没人会一直记得你的小插曲",
-        "corpus": [
-            "接纳自己的不完美，就像接纳四季的更迭；你不需要成为任何人，你本身的存在就已经足够美好。",
-            "不必觉得自己不够亮，微光也是光。我们不需要先成为一个完美的人，才配拥有完美的人生。",
-            "别人明天就会忘了，只有你还在惩罚自己。把注意力收回来，你没有那么多观众。"
-        ]
-    },
-    "👀 嫉妒": {
-        "strategy": "认知重评与专注自身赛道",
-        "action": "关上手机，拿上书去图书馆学习，主动寻找资源改变自己，多参与群里的活动",
-        "corpus": [
-            "允许别人发光，也相信自己有节奏。把目光移向自己。",
-            "你有自己的赛道，也有自己的远方。别人过的好，不代表你的人生就没机会了。",
-            "与其眼红别人的高光，不如去点亮自己的灯。把比较的精力收回到提升自己上。"
-        ]
-    },
-    "😩 厌恶": {
-        "strategy": "保护能量场与物理隔离",
-        "action": "去走廊吹风，去公园散步，在草稿纸上画搞笑的涂鸦，专注自己喜欢的手工",
-        "corpus": [
-            "你不必总是理性，总是平静温和，允许自己的厌恶与烦躁。",
-            "如果环境让你感到窒息，戴上耳机，给自己建一个安全的避难所。",
-            "去专注做一件自己喜欢的小事，把讨厌的世界隔绝在外。"
-        ]
-    },
-    "🌫️ 迷茫": {
-        "strategy": "存在主义探索与意义建构",
-        "action": "关掉手机去操场走一圈，打开真正感兴趣的书，写下目标和方向开始列计划，与同辈交谈",
-        "corpus": [
-            "你不必在风暴里立刻找到岸。允许自己漂一会儿；二十几岁，不是人生的答案期，而是探索期。",
-            "我身体里的火车从来不会错过，所以允许大雪，风暴，泥石流和荒谬。",
-            "有时候，你得先迷路，才能找到你要走的路。微光会陪你一起寻找。"
-        ]
-    },
-    "🍃 平静/无聊": {
-        "strategy": "正念觉察与自我关怀",
-        "action": "闭上眼睛听音乐，阅读纸质书，在阳台伸懒腰，下楼看看树叶，洗个苹果吃，整理床铺",
-        "corpus": [
-            "今天的天气很好，我也很好。人会在平静的日子里重新长出生命力。",
-            "去做你热爱的事，如果还没有找到热爱，就去看看世界。",
-            "如果连思考都觉得提不起劲也没关系，微光在这里陪你坐着，虚度一些时光也没关系。",
-            "人间至味是清欢，生活缓缓，一切都在慢慢变好。"
-        ]
-    },
-    "✨ 开心/幸运": {
-        "strategy": "积极情绪扩建与感恩",
-        "action": "拍下这一刻发朋友圈，奖励自己一杯奶茶，把好运和快乐存进心理账户",
-        "corpus": [
-            "你看，生活也会偷偷爱你。要相信结局一定配得上这一路的颠沛流离。",
-            "去拥抱这份好运吧，不要觉得受之有愧，你值得一切美好的事物。",
-            "今天的心情是苹果汽水，记住这一刻的甜，以后不开心的时候拿出来回味。",
-            "没有永恒的梅雨季，只有久违的艳阳天。"
-        ]
-    }
-}
+if 'archives' not in st.session_state: st.session_state['archives'] = []
+
+if 'bottles' not in st.session_state:
+    st.session_state['bottles'] = [
+        "“如果今天很累，就不要逼自己发光了，做个沐浴在月光下的废物也很好。” —— 来自 阿卷",
+        "“今天在图书馆崩溃大哭了一场，擦干眼泪去吃了一碗热汤面，突然觉得人生也就这样，吃饱了还能再战。” —— 来自 匿名的大三狗",
+        "“别怕，那些让你内耗的事情，几年后回头看，连个屁都不是。” —— 来自 毕业三年的学姐",
+        "“分享一个我的小妙招：每次觉得撑不下去的时候，我就去洗个热水澡，假装把所有的烦恼都冲进下水道。” —— 来自 爱洗澡的猫",
+        "“其实大家都很水的，别总觉得自己是最差的那个。允许自己偶尔摆烂，这是身体的自我保护机制。” —— 来自 摸鱼达人",
+        "“黑夜不是用来害怕的，是用来孵育星星的。祝你今晚有个好梦。” —— 来自 守夜人",
+        "“我今天也搞砸了一个很重要的面试。但我刚刚下楼买了一束花送给自己。你看，我们还是能控制一些事情的。” —— 来自 同在迷路的人",
+        "“不管今天过得有多烂，只要你还愿意在这里寻找微光，你就已经比昨天更勇敢了。” —— 来自 微光精灵"
+    ]
+
+api_key = st.secrets["API_KEY"]
+client = OpenAI(api_key=api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
+
+tab1, tab2 = st.tabs(["🎬 人生放映厅", "🌟 微光手记"])
 
 # ==========================================
-# 标签页 1：创作微光
+# 3. Tab 1: 人生放映厅
 # ==========================================
 with tab1:
-    st.write("### 写下今天发生的一件小事")
-    st.caption("无论是一次挫折，还是一个微小的高光时刻，微光都会陪你把它变成一部人生微电影。")
-    story = st.text_area("你的经历", height=120, placeholder="例如：今天面试失败了，感觉自己一无是处；或者，今天路上看到了一朵很好看的云……", label_visibility="collapsed")
+    st.write("### 今天，生活给你加了什么戏？")
     
-    style = st.selectbox("选择你的叙事方式", [
-        "🧠 重构挫折 (寻找经历背后的意义)", 
-        "🌿 放大美好 (记录你的高光与小确幸)", 
-        "🍃 纯粹记录 (不加评判，只是存在)"
-    ])
-    if st.button("生成专属叙事微电影", type="primary"):
+    col1, col2, col3 = st.columns(3)
+    if col1.button("🌪️ 今天很内耗"): st.session_state['story_input'] = "今天去面试被刷了，自己一无是处。"
+    if col2.button("🍃 今天很平淡"): st.session_state['story_input'] = "今天什么都没干，有点无聊。"
+    if col3.button("✨ 今天有小确幸"): st.session_state['story_input'] = "买到了最后一份糖醋排骨，看到了可爱的猫。"
+
+    story = st.text_area("输入经历", value=st.session_state.get('story_input', ""), height=120, placeholder="哪怕只是一句“今天好累”，也值得被记录。允许自己在这里停一停……", label_visibility="collapsed")
+    
+    st.write("**选择你的电影底色：**")
+    col_b1, col_b2, col_b3 = st.columns(3)
+    if 'vibe' not in st.session_state: st.session_state['vibe'] = "🌪️ 烦心事"
+    if col_b1.button("🌪️ 烦心事", use_container_width=True): st.session_state['vibe'] = "🌪️ 烦心事"
+    if col_b2.button("🍃 平淡", use_container_width=True): st.session_state['vibe'] = "🍃 平淡"
+    if col_b3.button("✨ 小确幸/高光", use_container_width=True): st.session_state['vibe'] = "✨ 小确幸/高光"
+    
+    st.info(f"当前已选择：**{st.session_state['vibe']}**")
+
+    if st.button("🎬 Action！开拍我的电影", type="primary"):
         if not story.strip():
-            st.warning("写点什么吧，哪怕只有几个字～")
+            st.warning("写点什么吧～")
         else:
-            with st.spinner("🧚‍♀️ 微光精灵正在施展叙事魔法，为你重构故事……"):
+            # 全光谱情绪自适应加载提示
+            current_vibe = st.session_state['vibe']
+            if "烦心事" in current_vibe:
+                loading_text = "🪄 正在拾取你的经历...\n\n尝试把眼前的挫折，重写为一次成长的伏笔...\n\n电影即将放映，请深呼吸，准备以旁观者的身份看看自己。"
+            elif "平淡" in current_vibe:
+                loading_text = "🪄 正在捕捉平淡里的微光...\n\n在那些看似无意义的发呆瞬间，往往藏着最真实的自己...\n\n电影即将放映，请放松身体，准备安静地看看今天。"
+            else:
+                loading_text = "🪄 正在封存这份美好...\n\n尝试把此刻的快乐放大，让它成为未来抵抗风雨的弹药...\n\n电影即将放映，请带着微笑，重温这个闪闪发光的瞬间。"
+
+            with st.spinner(loading_text):
                 try:
-                    api_key = st.secrets["API_KEY"]
-                    client = OpenAI(api_key=api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
-                    
-                    prompt = f"""你是一位深谙叙事疗法与积极心理学的导师。请根据用户的经历，创作一部赋予生命意义的“自传体微电影”剧本。
-                    
-【认知干预指令】
-1. 负面经历：运用“认知重评”，把挫折转化为自我成长的契机。
-2. 正面经历：运用“积极情绪扩建”，放大美好瞬间。
-3. 叙事方式偏好：{style}。
+                    # 🔥 加入强制画面与底色对齐的“死命令”
+                    prompt = f"""你是一位深谙叙事疗法与积极心理学的微电影导演。请根据用户的经历，创作一部第一人称的微电影剧本。
 
-【字数与逻辑要求（极度重要）】
-1. 严格输出 3 个场景。
-2. 每个场景的【旁白】字数必须丰富（不少于 80 字），要有细腻的内心独白和环境描写，不要像大纲！
-3. 场景2到场景3的转折必须自然，不能直接跳跃。必须加入一个具体的“微小细节”（如：冰凉的指尖、窗外的一阵冷风），让主角顺理成章地过渡到【微小行动】。
+【严格贴合底色的死命令】
+1. 当前用户选择的电影底色是：**【{st.session_state['vibe']}】**。
+2. 如果底色是“小确幸/高光”：剧本必须全程充满温暖、治愈的细节（如阳光、美食、猫咪的特写），**绝对禁止**出现下雨、悲伤、孤独、长椅等负面意象！
+3. 如果底色是“烦心事”：才允许出现挫折和最终的释怀。
+4. 如果底色是“平淡”：描写安静、发呆的松弛感。
 
-【画图提示词约束（极度重要）】
-在【画面描述】中，请使用纯英文，并必须强制使用写实、接地气的词汇（例如：student dormitory, messy desk, narrow shower room, casual clothes）。绝对禁止使用导致画面变得奢华或西方的词（如：palace, luxury bathtub, Victorian room）。
+【画面描述约束】
+【画面描述】必须直接提取用户经历里的**核心物品**（比如：糖醋排骨、可爱的猫、温暖的阳光、宿舍的桌子），必须使用纯英文（5-8个词组），写实风格。
+
+【剧本格式要求】
+1. 必须是第一人称“我”。
+2. 严格输出 3 个场景，【旁白】字数不少于 80 字。
+3. 剧本的【场景名】和【旁白】必须使用纯中文。
 
 【输出格式要求】
 【场景名】（中文）
-【旁白】（中文，第一人称，80字以上）
-【画面描述】（纯英文，5-8个词组，例如：Messy student dormitory, a tired student in casual clothes, dim light, realistic）
+【旁白】（中文，80字以上）
+【画面描述】（纯英文词组，如：Delicious sweet and sour ribs, warm sunlight, cute cat）
 
 用户经历：{story}"""
                     
                     response = client.chat.completions.create(
                         model="glm-4-flash",
-                        messages=[{"role": "system", "content": "你是一个叙事疗法编剧。"}, {"role": "user", "content": prompt}],
+                        messages=[{"role": "system", "content": "你是一位顶级的微电影导演。"}, {"role": "user", "content": prompt}],
                         temperature=0.7
                     )
-                    
                     script = response.choices[0].message.content
-                    
-                    st.balloons()
-                    st.snow()
-                    
-                    st.markdown('<h3 class="glow-text">✨ 你的专属故事已重构完成：</h3>', unsafe_allow_html=True)
+                    st.success("✨ 你的专属故事已重构完成：")
                     st.write(script)
                     
                     st.markdown("---")
                     st.subheader("🎬 分镜画面生成")
                     
-                    image_prompts = []
-                    matches = re.findall(r"画面描述[】\]：:\s]*([a-zA-Z0-9\s,\.'\-]+)", script)
-                    
-                    for match in matches:
-                        clean_prompt = match.strip()
-                        if len(clean_prompt) > 5:
-                            safe_prompt = clean_prompt + ", realistic, modern Chinese university campus, humble setting, casual everyday life, no luxury"
-                            image_prompts.append(safe_prompt)
+                    image_prompts = re.findall(r'画面描述[^a-zA-Z]*([a-zA-Z0-9\s,\.\'\-]+)', script)
                     
                     if image_prompts:
-                        for i, img_prompt in enumerate(image_prompts[:3]): 
-                            with st.spinner(f"正在绘制场景 {i+1} 的画面……（请稍候）"):
+                        for i, clean_prompt in enumerate(image_prompts[:3]): 
+                            with st.spinner(f"正在绘制场景 {i+1}……"):
                                 try:
-                                    img_response = client.images.generate(
-                                        model="cogview-3-flash",
-                                        prompt=img_prompt
-                                    )
-                                    st.image(img_response.data[0].url, caption=f"场景 {i+1}", use_container_width=True)
+                                    safe_prompt = clean_prompt.strip() + ", realistic, modern Chinese university campus, no luxury"
+                                    img_response = client.images.generate(model="cogview-3-flash", prompt=safe_prompt)
+                                    img_url = img_response.data[0].url
+                                    st.image(img_url, caption=f"场景 {i+1}", use_container_width=True)
+                                    if i == 0: st.session_state['poster_img'] = img_url 
                                 except Exception as img_e:
-                                    st.error(f"画面 {i+1} 生成失败，接口报错: {img_e}")
+                                    st.error(f"画面生成失败: {img_e}")
                     else:
-                        st.warning("⚠️ 系统没有提取到标准的【画面描述】英文，请重新生成一次。")
-
+                        st.warning("⚠️ 未能提取到画面描述，请点击重新生成。")
+                    
+                    st.session_state['user_story'] = story
                     st.session_state['has_created'] = True
-                    st.success("👆 故事已生成。现在请点击上方 **【🌟 拾取微光】**，进行更深度的自我对话。")
-
+                    st.success("👆 故事已生成。请点击上方 **【🌟 微光手记】** 继续。")
                 except Exception as e:
-                    st.error(f"生成失败，请检查 API Key。错误信息：{e}")
+                    st.error(f"生成失败: {e}")
 
+# ==========================================
+# 4. Tab 2: 微光手记
+# ==========================================
 with tab2:
-    if 'emotion_archive' not in st.session_state:
-        st.session_state['emotion_archive'] = []
-
     if not st.session_state.get('has_created', False):
-        with st.chat_message("assistant", avatar="🧚‍♀️"):
-            st.write("你好呀，我是微光。请先去左侧 **【创作微光】** 完成你的故事，我们再一起聊聊。")
+        st.info("请先去【🎬 人生放映厅】生成你的专属电影。")
     else:
-        with st.chat_message("assistant", avatar="🧚‍♀️"):
-            st.write("刚刚你重新导演了自己的故事。此刻，你心底最真实的感受是什么？")
-            
-        emotion = st.selectbox("选择你当下的状态：", list(COGNITION_RULES.keys()))
+        st.write("### 🎞️ 杀青后的微光夜话")
         
-        if emotion:
-            rule = COGNITION_RULES[emotion]
-            selected_corpus = random.choice(rule['corpus'])
-            
-            with st.chat_message("assistant", avatar="🧚‍♀️"):
-                st.write(f"> {selected_corpus}")
-                
-                if "迷茫" in emotion:
-                    st.write("💡 **微光想问你：** 如果十年后的你，回头看今天这个迷茫的自己，你觉得他/她会拍拍你的肩膀，对你说句什么话呢？")
-                elif "焦虑" in emotion or "悲伤" in emotion:
-                    st.write("💡 **微光想问你：** 那个让你感到充满压力的‘自己’，其实已经很努力了。如果现在给你一个拥抱，你最想对他说什么？")
-                else:
-                    st.write("💡 **微光想问你：** 感受着此刻的情绪，你觉得身体哪个部位最放松？可以把手轻轻放在那里吗？")
-                
-                st.info(f"🌱 **微光行动卡：** 在刚刚的故事里，主角做了一件事——*{rule['action']}*。这其实就是你在尝试照顾自己。")
-                
-            st.markdown("---")
-            st.write("### 📁 存入你的「自我对话」档案")
-            st.caption("请把刚刚在心里对自己的回答写下来。")
-            
-            with st.form("archive_form", clear_on_submit=True):
-                feedback = st.text_input("你想对自己说：", placeholder="比如：别怕，慢一点也没关系，我已经做得很好了。")
-                submitted = st.form_submit_button("记录此刻，完成自我建构", type="primary")
-                
-                if submitted:
-                    if not feedback.strip():
-                        st.warning("写一句对自己说的话吧～")
-                    else:
-                        new_record = {
-                            "time": time.strftime('%Y-%m-%d %H:%M'),
-                            "emotion": emotion,
-                            "feedback": feedback
-                        }
-                        st.session_state['emotion_archive'].append(new_record)
-                        st.balloons()
-                        st.success("✅ 已存入！你正在慢慢长出力量。")
+        col_img, col_text = st.columns([1, 2])
+        with col_img:
+            if 'poster_img' in st.session_state:
+                st.image(st.session_state['poster_img'], use_container_width=True)
+        with col_text:
+            st.caption("你刚才经历的是：")
+            st.info(f"“{st.session_state.get('user_story', '')[:30]}……”")
+            st.caption("看着刚才的画面，此刻，你想对屏幕里的主角说点什么？")
+        
+        vibe = st.session_state['vibe']
+        
+        with st.chat_message("assistant", avatar="🧚‍♀️"):
+            if "烦心事" in vibe:
+                st.write("💡 **微光夜话：** 你看，电影里的你最后用一个小动作接住了自己。现实中，如果屏幕里那个刚经历完挫折的主角就坐在你面前，你会想带他去做点什么小事？")
+            elif "平淡" in vibe:
+                st.write("💡 **微光夜话：** 电影里记录了你发呆的瞬间。如果给这个平淡的画面配一句你最想说的旁白，会是什么？")
+            else:
+                st.write("💡 **微光夜话：** 要把这份开心装进漂流瓶寄给未来的自己，你想在瓶子里塞一张写着什么字的纸条？")
+
+        if "烦心事" in vibe and len(st.session_state.get('archives', [])) > 0:
+            pos_records = [a for a in st.session_state['archives'] if "小确幸" in a['vibe']]
+            if pos_records:
+                past = random.choice(pos_records)
+                st.info(f"🕰️ **来自过去的微光：** 还记得 {past['date']} 吗？那天你写下：\n\n“*{past['feedback']}*”\n\n今天虽然难，但那个能感知快乐的你，一直都在。")
 
         st.markdown("---")
-        with st.expander("🗂️ 查看我的「内心成长」轨迹"):
-            if len(st.session_state['emotion_archive']) == 0:
-                st.info("还没有记录哦，快去打卡吧。")
-            else:
-                for record in reversed(st.session_state['emotion_archive']):
-                    st.info(f"**{record['time']}** | 状态: {record['emotion']} \n\n**我想对自己说:** {record['feedback']}")
+        col_bottle1, col_bottle2 = st.columns([1, 2])
+        with col_bottle1:
+            if st.button("🌊 捞起一个漂流瓶 🍾"):
+                st.session_state['show_bottle'] = True
+        with col_bottle2:
+            if st.session_state.get('show_bottle', False):
+                st.success(f"🌊 捡到了一个发光的瓶子，里面写着：\n\n**{random.choice(st.session_state['bottles'])}**")
+
+        st.markdown("---")
+        with st.form("archive_form", clear_on_submit=True):
+            feedback = st.text_input("📝 写下你的微光手记：", placeholder="在这里写下你的感悟……")
+            is_public = st.checkbox("🌊 愿意把这句话投入大海，或许能温暖另一个迷路的人")
+            submitted = st.form_submit_button("🔒 盖印，封存今日胶片", type="primary")
+            
+            if submitted and feedback.strip():
+                st.snow() 
+                st.session_state['archives'].append({"date": time.strftime('%Y.%m.%d'), "vibe": vibe, "feedback": feedback})
+                if is_public: st.session_state['bottles'].append(f"“{feedback}” —— 来自刚刚的微光")
+                
+                if "烦心事" in vibe:
+                    tags = [("🌪️ 加缪的推石者", "承认荒诞，并在推石头的过程中找到平静。"), ("🌫️ 迷雾航海家", "看不清远方没关系，大雾本身就是风景。")]
+                else:
+                    tags = [("✨ 人间小太阳", "你拥有感知日常美好的超能力。"), ("📸 幸福拾荒者", "你敏锐地捕捉到了生活里的糖。")]
+                tag_title, tag_desc = random.choice(tags)
+                
+                st.markdown(f"""
+                <div style="background: rgba(26, 15, 14, 0.8); border-radius: 15px; padding: 25px; text-align: center; border: 1px solid #FFD700; margin-top: 20px; backdrop-filter: blur(10px);">
+                    <p style="color: #A88B7D; font-size: 14px; letter-spacing: 2px;">今日人格：{tag_title}</p>
+                    <p style="color: #F5E6D3; font-size: 15px; font-style: italic; margin: 20px 0;">“{tag_desc}”</p>
+                    <div style="border-top: 1px dashed #6B4C3A; margin: 15px 0;"></div>
+                    <p style="color: #FFD700; font-size: 16px;">“ {feedback} ”</p>
+                    <p style="color: #555; font-size: 12px; margin-top: 15px;">—— 记于 {time.strftime('%Y.%m.%d')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.caption("📸 这枚徽章已刻入你的生命档案。下次难过时，记得来看看今天的你有多勇敢。")
+                st.toast("如果你愿意，可以把这句话扔进海里，给另一个今晚迷路的人一点光。", icon="🌊")
